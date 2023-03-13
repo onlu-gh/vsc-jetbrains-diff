@@ -1,4 +1,4 @@
-# Compare files, folders, clipboard or git changes with the tool meld (or other like WinMerge, Beyond Compare, ...) directly from vs code
+# Compare files, folders, clipboard or git changes with the JetBrains resolver tool directly from vs code
 
 This extension open two files (or folders) in the external tool meld (or any other diff tool you want). It is also possible to compare editor context or text selection with the clipboard or to use it with the git source control.
 
