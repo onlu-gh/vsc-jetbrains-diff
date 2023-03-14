@@ -162,11 +162,6 @@
 					"default": "",
 					"description": "In case you'd like to use an unlisted diff tool, or use an absolute path instead of adding an environment variable. (Setting this option will override the `diffCheckerTool` setting)"
 				},
-				"jetbrains-diff.resolveAgainstMerged": {
-					"type": "boolean",
-					"default": false,
-					"description": "Use the $MERGED file for the middle section during merge conflict resolution, instead of $BASE (this will make the `<<<<<<< HEAD` notation visible, and show both changes)."
-				},
 				"jetbrains-diff.cleanUpTempFilesOnCodeClose": {
 					"type": "boolean",
 					"default": true,
