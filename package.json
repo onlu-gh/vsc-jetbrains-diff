@@ -1,6 +1,6 @@
 {
 	"name": "jetbrains-diff",
-	"version": "0.9.1",
+	"version": "1.0.0",
 	"displayName": "JetBrains Diff",
 	"description": "Use jetbrains diff resolver tool to compare files, folders, clipboard or git changes from visual studio code directly.",
 	"publisher": "onlu-gh",
@@ -155,7 +155,7 @@
 						"WebStorm",
 						"PyCharm"
 					],
-					"description": "The resolver tool - pick a JetBrains product you have installed.\nThis depends on a defitions of an environment variable\n(hint: the default directory route for JetBrains products on windows is `C:\\Program Files\\JetBrains\\<Product Name>\\bin`)."
+					"description": "The resolver tool - pick a JetBrains product you have installed.\nThis depends on a defitions of an environment variable.\n\nHint:\nThe default directory route for JetBrains products on windows is -\n`C:\\Program Files\\JetBrains\\<Product Name>\\bin`)."
 				},
 				"jetbrains-diff.customDiffCheckerTool": {
 					"type": "string",

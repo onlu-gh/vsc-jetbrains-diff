@@ -1,11 +1,12 @@
 import * as vscode from 'vscode';
 
 import * as cp from 'child_process';
-import { createReadStream, existsSync, statSync, unlink, writeFile } from 'fs';
+import { createReadStream, existsSync, statSync, unlink, writeFile, copyFile } from 'fs';
 import * as os from 'os';
 import { basename, dirname, join } from 'path';
 import * as streamEqual from 'stream-equal';
 import { commands, window } from 'vscode';
+import simpleGit from 'simple-git';
 
 let fillListDone = false;
 let filesToRemove: string[] = [];
@@ -125,6 +126,10 @@ function rndName() {
 	return Math.random().toString(36).substr(2, 10);
 }
 
+function generateRandomFileNameWithPrefix(prefix?: string) {
+	return join(os.tmpdir(), prefix + rndName());
+}
+
 /**
  * Simple random file creation
  *
@@ -132,7 +137,7 @@ function rndName() {
  */
 function createRandomFile({ contents = '', prefix = 'tmp' }: { contents?: string; prefix?: string; } = {}): Thenable<vscode.Uri> {
 	return new Promise((resolve, reject) => {
-		const tmpFile = join(os.tmpdir(), prefix + rndName());
+		const tmpFile = generateRandomFileNameWithPrefix(prefix);
 		writeFile(tmpFile, contents, (error) => {
 			if (error) {
 				return reject(error);
@@ -187,11 +192,10 @@ interface Callback {
 	(tmpFile: string, error: any): void;
 }
 
-async function runGit(selectedFile: string, gitCmd: string, prefix: string, callback: Callback) {
+async function generateTempFileFromGitShow(selectedFile: string, gitCmd: string, prefix: string, callback: Callback) {
 	const selectedFileBasename = basename(selectedFile);
 	const selectedFileDir = dirname(selectedFile);
 
-	const simpleGit = await import('simple-git');
 	let tmpData = "";
 	simpleGit(selectedFileDir).outputHandler((cmd: any, stdOut: any) => {
 		stdOut.on('data', async (data: any) => {
@@ -216,14 +220,37 @@ async function runGit(selectedFile: string, gitCmd: string, prefix: string, call
 	});
 }
 
-enum MergeConflictFileType {
-	LOCAL,
-	REMOTE,
-	BASE,
-	MERGED,
+async function stageFile(file: string, callback: Callback) {
+	const fileBasename = basename(file);
+	const fileDir = dirname(file);
+
+	simpleGit(fileDir).add(fileBasename, (err: any) => {
+		if (err) {
+			window.showErrorMessage(`Failed to stage '${fileBasename}'.\nError:\n${err}`);
+		}
+		callback(file, err);
+	});
 }
 
-type MergeConflictFiles = Record<MergeConflictFileType, string>;
+function backUpFile(source: string, callback: Callback) {
+	const backup = generateRandomFileNameWithPrefix('backup');
+	copyFile(source, backup, (err: any) => {
+		if (err) {
+			return window.showErrorMessage(`Failed to back up '${source}'.\nError:\n${err}`);
+		}
+		addFileToRemove(backup);
+
+		callback(backup, err);
+	});
+}
+
+function restoreFileFromBackup(backup: string, dest: string) {
+	copyFile(backup, dest, (err) => {
+		if (err) {
+			return window.showErrorMessage(`Failed to restore original file contents, try undoing or rolling back to a previous commit.\nError:\n${err}`);
+		}
+	});
+}
 
 export function activate(context: vscode.ExtensionContext) {
 	const open_files_event: string[] = [];
@@ -497,7 +524,7 @@ export function activate(context: vscode.ExtensionContext) {
 		switch (_.type) {
 			case 5: // unstaged changes
 				// get content of staging version of the selected file
-				runGit(selectedFile, ":./", "staged", (staged, err) => {
+				generateTempFileFromGitShow(selectedFile, ":./", "staged", (staged, err) => {
 					if (err) {
 						return window.showErrorMessage(err);
 					}
@@ -512,12 +539,12 @@ export function activate(context: vscode.ExtensionContext) {
 
 			case 0: // staged changes
 				// get content of staging version of the selected file
-				runGit(selectedFile, ":./", "staged", (staged, err) => {
+				generateTempFileFromGitShow(selectedFile, ":./", "staged", (staged, err) => {
 					if (err) {
 						return window.showErrorMessage(err);
 					}
 					// get content of head version of the selected file
-					runGit(selectedFile, "HEAD:./", "head", (head, err) => {
+					generateTempFileFromGitShow(selectedFile, "HEAD:./", "head", (head, err) => {
 						if (err) {
 							return window.showErrorMessage(err);
 						}
@@ -531,49 +558,70 @@ export function activate(context: vscode.ExtensionContext) {
 				});
 				break;
 
-			case 16: // merge conflicts
-				// get content of head version of the selected file
-				runGit(selectedFile, ":2:./", "current", (head, err) => {
-					if (err) {
-						return window.showErrorMessage(err);
-					}
-					// get content of incoming version of the selected file
-					runGit(selectedFile, ":3:./", "incoming", (incoming, err) => {
+			case 16: { // merge conflicts
+				// back up orignal contents of selected file
+				backUpFile(selectedFile, (backup) => {
+
+					const restoreSelectedFileFromBackup = () => restoreFileFromBackup(backup, selectedFile);
+					// get content of common base revision of the selected file for the merge
+					generateTempFileFromGitShow(selectedFile, ":1:./", "base", (base, err) => {
 						if (err) {
 							return window.showErrorMessage(err);
 						}
-
-						const mergeConflictFiles: MergeConflictFiles = {
-							[MergeConflictFileType.LOCAL]: head,
-							[MergeConflictFileType.REMOTE]: incoming,
-							[MergeConflictFileType.BASE]: selectedFile,
-							[MergeConflictFileType.MERGED]: selectedFile,
-						};
-
-						if (!vscode.workspace.getConfiguration('jetbrains-diff').resolveAgainstMerged) {
-							// get content of common base revision of the selected file for the merge
-							runGit(selectedFile, ":1:./", "base", (base, err) => {
+						// get content of head version of the selected file
+						generateTempFileFromGitShow(selectedFile, ":2:./", "current", (local, err) => {
+							if (err) {
+								return window.showErrorMessage(err);
+							}
+							// get content of incoming version of the selected file
+							generateTempFileFromGitShow(selectedFile, ":3:./", "incoming", (incoming, err) => {
 								if (err) {
 									return window.showErrorMessage(err);
 								}
-								mergeConflictFiles[MergeConflictFileType.BASE] = base;
-							}).then();
-						}
+								copyFile(base, selectedFile, (err) => {
+									if (err) {
+										restoreSelectedFileFromBackup();
 
-						const process = showJetBrainsResolver([
-							mergeConflictFiles[MergeConflictFileType.LOCAL],
-							mergeConflictFiles[MergeConflictFileType.REMOTE],
-							mergeConflictFiles[MergeConflictFileType.BASE],
-							mergeConflictFiles[MergeConflictFileType.MERGED],
-						]);
+										return window.showErrorMessage(err.message);
+									}
 
-						if (process && filesToRemove.length > 0) {
-							const files = [...filesToRemove];
-							process.on('exit', () => cleanupTmpFiles(files));
-						}
+									//TODO add meaningful comment
+									const process = showJetBrainsResolver([local, incoming, selectedFile]);
+
+									if (process) {
+										process.once('error', () => {
+											// restore orignal contents of selected file in case of error during the merge process
+											restoreSelectedFileFromBackup();
+										});
+										process.once('exit', (code) => {
+											if (code === 0) {
+												stageFile(selectedFile, (_, err) => {
+													if (err) {
+														return window.showErrorMessage(`Application of merge conflict resolution was successful, try to stage file manually through the interface.`);
+													}
+													return window.showInformationMessage(`File merged successfully!`);
+												});
+											}
+											else {
+												// restore orignal contents of selected file in case of unsuccessful exit code
+												restoreSelectedFileFromBackup();
+
+												return window.showErrorMessage(`JetBrains diff tool process finished with unsuccessful error code`);
+											}
+											process.removeAllListeners();
+											if (filesToRemove.length > 0) {
+												const files = [...filesToRemove];
+												cleanupTmpFiles(files);
+											}
+										});
+									}
+								});
+							});
+						});
 					});
 				});
 				break;
+			}
 
 			case 7: // untracked file
 				window.showInformationMessage("JetBrains Diff: No diff possible for untracked files!");
