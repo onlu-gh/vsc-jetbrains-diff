@@ -56,7 +56,7 @@ function showJetBrainsResolver(files: string[]) {
 
 	// construct cmd
 	const operation: string = diffFiles.length === 2 ? 'diff' : 'merge';
-	const cmd: string = diffTool + ' ' + operation + " " + diffFiles.join(' ');
+	const cmd: string = diffTool + ' ' + operation + " " + diffFiles.map(fn => `"${fn}"`).join(' ');
 
 	outputChannel.appendLine("Run: " + cmd);
 
