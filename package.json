@@ -155,12 +155,12 @@
 						"WebStorm",
 						"PyCharm"
 					],
-					"description": "The resolver tool - pick a JetBrains product you have installed.\nThis depends on a defitions of an environment variable (hint: the default directory route for JetBrains products on windows is `C:\\Program Files\\JetBrains\\<Product Name>\\bin`)."
+					"description": "The resolver tool - pick a JetBrains product you have installed.\nThis depends on a defitions of an environment variable\n(hint: the default directory route for JetBrains products on windows is `C:\\Program Files\\JetBrains\\<Product Name>\\bin`)."
 				},
 				"jetbrains-diff.customDiffCheckerTool": {
 					"type": "string",
 					"default": "",
-					"description": "In case you'd like to use an unlisted diff tool, or use an absolute path instead of adding an environment variable."
+					"description": "In case you'd like to use an unlisted diff tool, or use an absolute path instead of adding an environment variable. (Setting this option will override the `diffCheckerTool` setting)"
 				},
 				"jetbrains-diff.resolveAgainstMerged": {
 					"type": "boolean",
@@ -170,7 +170,7 @@
 				"jetbrains-diff.cleanUpTempFilesOnCodeClose": {
 					"type": "boolean",
 					"default": true,
-					"description": "Temporary files (created for clipboard or unsaved comparison) are deleted if visual studio code is closed before JetBrains tool"
+					"description": "Temporary files (created for clipboard or unsaved comparison) are deleted if visual studio code is closed before JetBrains tool."
 				}
 			}
 		}
