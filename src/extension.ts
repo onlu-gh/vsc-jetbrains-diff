@@ -10,26 +10,34 @@ import * as cp from 'child_process';
 let fillListDone = false;
 let filesToRemove: string[] = [];
 const filesToRemoveGlobal: string[] = [];
-const outputChannel = vscode.window.createOutputChannel(`MeldDiff`);
+const outputChannel = vscode.window.createOutputChannel(`JetBrainsDiff`);
 
 function addFileToRemove(file: string) {
 	filesToRemove.push(file);
 	filesToRemoveGlobal.push(file);
 }
 
-function showMeld(files: string[]) {
-	let diffTool = vscode.workspace.getConfiguration('meld-diff').diffCommand;
-	if (diffTool.match(/(?<!\\) /)) {
-		// diffTool path includes not escaped spaces so it must be enclosed in quotes
-		if (! diffTool.match(/^(["']).*\1$/)) {
-			// the diffTool is not enclosed in quotes
-			diffTool = '"' + diffTool +'"'
+function showJetBrainsResolver(files: string[]) {
+	let diffTool: string;
+	const customDiffTool: string = vscode.workspace.getConfiguration('jetbrains-diff').customDiffCheckerTool;
+
+	if (customDiffTool !== "") {
+		diffTool = customDiffTool;
+		if (diffTool.match(/(?<!\\) /)) {
+			// diffTool path includes not escaped spaces so it must be enclosed in quotes
+			if (!diffTool.match(/^(["']).*\1$/)) {
+				// the diffTool is not enclosed in quotes
+				diffTool = '"' + diffTool + '"'
+			}
 		}
+	} else {
+		diffTool = vscode.workspace.getConfiguration('jetbrains-diff').diffCheckerTool;
 	}
+
 	const diffFiles = files.filter(v => existsSync(v.toString())).slice(0, 3);
 
 	if (diffFiles.length < 2) {
-		window.showErrorMessage("Meld Diff Error: Minimum two files are needed to diff!");
+		window.showErrorMessage("JetBrains Diff Error: Minimum two files are needed to diff!");
 		return;
 	}
 
@@ -42,37 +50,23 @@ function showMeld(files: string[]) {
 		directoriesInDiffFiles = directoriesInDiffFiles || stat.isDirectory();
 	});
 	if (fileInDiffFiles && directoriesInDiffFiles) {
-		window.showErrorMessage("Meld Diff Error: Meld can't compare files with directories!");
+		window.showErrorMessage("JetBrains Diff Error: JetBrains can't compare files with directories!");
 		return;
 	}
 
 	// construct cmd
-	let argsConf = "";
-	if (diffFiles.length == 2) {
-		argsConf = vscode.workspace.getConfiguration('meld-diff').diffArgumentsTwoWay;
-	} else if (diffFiles.length == 3) {
-		argsConf = vscode.workspace.getConfiguration('meld-diff').diffArgumentsThreeWay;
-	}
-	//replace placeholder in argsConf
-	if (diffFiles.length >= 2) {
-		argsConf = argsConf.replace("$1", diffFiles[0])
-		argsConf = argsConf.replace("$2", diffFiles[1])
-	}
-	if (diffFiles.length == 3) {
-		argsConf = argsConf.replace("$3", diffFiles[2])
-	}
-
-	const cmd = diffTool + " " + argsConf;
+	let cmd: string = diffTool + ' ' + diffFiles.join(' ');
 
 	outputChannel.appendLine("Run: " + cmd);
+
 	return cp.exec(
 		cmd,
 		(error: cp.ExecException | null, stdout: string, stderr: string) => {
 			if (error) {
-				if (error.message.match(/meld: not found/)) {
-					window.showErrorMessage("Meld Diff Error: Meld is not installed!");
+				if (error.message.match(new RegExp(`${diffTool}: not found`))) {
+					window.showErrorMessage("JetBrains Diff Error: Diff tool cannot be found!");
 				} else {
-					window.showErrorMessage("Meld Diff Error: Error running diff command! StdErr: " + stderr)
+					window.showErrorMessage("JetBrains Diff Error: Error running diff command! StdErr: " + stderr)
 				}
 			}
 		});
@@ -93,7 +87,7 @@ function showListAndDiff(current: string, possible_diffs: string[], filesToRemov
 		placeHolder: 'Filename to diff'
 	}).then(result => {
 		if (existsSync(result)) {
-			const process = showMeld([current, result]);
+			const process = showJetBrainsResolver([current, result]);
 			if (process && filesToRemove.length > 0) {
 				const files = [...filesToRemove];
 				process.on('exit', () => cleanupTmpFiles(files));
@@ -177,7 +171,7 @@ async function getFileNameOfDocument(document: vscode.TextDocument) {
 	if (document.isUntitled) {
 		//compare untitled file or changed content of file instead of saved file
 		let prefix = "untitled_";
-		if (! document.isUntitled) {
+		if (!document.isUntitled) {
 			prefix = basename(document.fileName) + "_";
 		}
 		const documentContent = document.getText();
@@ -207,19 +201,28 @@ async function runGit(selectedFile: string, gitCmd: string, prefix: string, call
 			const staged = await writeTempFileOnDisk(tmpData, prefix + "_" + selectedFileBasename + "_");
 			addFileToRemove(staged);
 
-			if (! existsSync(staged)) {
-				callback("", "Meld Diff Error: Can't create temp file!");
+			if (!existsSync(staged)) {
+				callback("", "JetBrains Diff Error: Can't create temp file!");
 			}
 
-			// start meld
+			// start jetbrains diff tool
 			callback(staged, null);
 		});
 	}).raw(
-		[ "show", gitCmd + selectedFileBasename ]
+		["show", gitCmd + selectedFileBasename]
 	).catch((err: any) => {
-		callback("", "Meld Diff Error: " + err);
+		callback("", "JetBrains Diff Error: " + err);
 	});
 }
+
+enum MergeConflictFileType {
+	LOCAL,
+	REMOTE,
+	BASE,
+	MERGED,
+}
+
+type MergeConflictFiles = Record<MergeConflictFileType, string>;
 
 export function activate(context: vscode.ExtensionContext) {
 	const open_files_event: string[] = [];
@@ -241,7 +244,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
-	context.subscriptions.push(vscode.commands.registerCommand('meld-diff.diffVisible', async () => {
+	context.subscriptions.push(vscode.commands.registerCommand('jetbrains-diff.diffVisible', async () => {
 		let open_files: string[] = [];
 		filesToRemove = [];
 
@@ -258,33 +261,35 @@ export function activate(context: vscode.ExtensionContext) {
 			if (open_files.length == 0) {
 				fileCount = "No files are";
 			}
-			window.showErrorMessage("Meld Diff Error: Can't compare! " + fileCount + " visible in editor!");
+			window.showErrorMessage("JetBrains Diff Error: Can't compare! " + fileCount + " visible in editor!");
 			return;
 		}
 
 		// sort open files by last modification, newest first
 		open_files = open_files.map(function (fileName) {
 			return {
-			  name: fileName,
-			  time: statSync(fileName).mtime.getTime()
+				name: fileName,
+				time: statSync(fileName).mtime.getTime()
 			};
-		  })
-		  .sort(function (a, b) {
-			return b.time - a.time; })
-		  .map(function (v) {
-			return v.name; });
+		})
+			.sort(function (a, b) {
+				return b.time - a.time;
+			})
+			.map(function (v) {
+				return v.name;
+			});
 
 		// TODO add areFilesEqual to every step
-		const process = showMeld(open_files);
+		const process = showJetBrainsResolver(open_files);
 		if (process && filesToRemove.length > 0) {
 			const files = [...filesToRemove];
 			process.on('exit', () => cleanupTmpFiles(files));
 		}
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('meld-diff.diffCurrentToOtherOpen', async () => {
+	context.subscriptions.push(vscode.commands.registerCommand('jetbrains-diff.diffCurrentToOtherOpen', async () => {
 		if (!window.activeTextEditor) {
-			window.showErrorMessage("Meld Diff Error: Current window is not an editor!");
+			window.showErrorMessage("JetBrains Diff Error: Current window is not an editor!");
 			return;
 		}
 
@@ -297,9 +302,9 @@ export function activate(context: vscode.ExtensionContext) {
 		doIt(current.name, open_files_event, filesToRemove);
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('meld-diff.diffCurrentToOther', async () => {
+	context.subscriptions.push(vscode.commands.registerCommand('jetbrains-diff.diffCurrentToOther', async () => {
 		if (!window.activeTextEditor) {
-			window.showErrorMessage("Meld Diff Error: Current window is not an editor!");
+			window.showErrorMessage("JetBrains Diff Error: Current window is not an editor!");
 			return;
 		}
 
@@ -316,7 +321,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 		window.showOpenDialog(options).then(_ => {
 			if (_) {
-				const process = showMeld([current.name, _[0].fsPath]);
+				const process = showJetBrainsResolver([current.name, _[0].fsPath]);
 				if (process && filesToRemove.length > 0) {
 					const files = [...filesToRemove];
 					process.on('exit', () => cleanupTmpFiles(files));
@@ -326,10 +331,10 @@ export function activate(context: vscode.ExtensionContext) {
 
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('meld-diff.diffWithClipboard', async () => {
+	context.subscriptions.push(vscode.commands.registerCommand('jetbrains-diff.diffWithClipboard', async () => {
 		const editor = window.activeTextEditor;
 		if (!editor) {
-			window.showErrorMessage("Meld Diff Error: Current window is not an editor!");
+			window.showErrorMessage("JetBrains Diff Error: Current window is not an editor!");
 			return;
 		}
 
@@ -355,7 +360,7 @@ export function activate(context: vscode.ExtensionContext) {
 			addFileToRemove(current);
 			sameContent = await areFilesEqual([current, clipboard]);
 		} else if (editor.document.isDirty) {
-			//compore against dirty content but invoke meld with current saved file
+			//compore against dirty content but invoke jetbrains diff tool with current saved file
 			const editorContent = editor.document.getText();
 			const tmpCheck = await writeTempFileOnDisk(editorContent);
 			addFileToRemove(tmpCheck);
@@ -365,10 +370,10 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 
 		if (sameContent) {
-			window.showInformationMessage('Meld Diff: No difference');
+			window.showInformationMessage('JetBrains Diff: No difference');
 			cleanupTmpFiles(filesToRemove);
 		} else {
-			const process = showMeld([current, clipboard]);
+			const process = showJetBrainsResolver([current, clipboard]);
 			if (process && filesToRemove.length > 0) {
 				const files = [...filesToRemove];
 				process.on('exit', () => cleanupTmpFiles(files));
@@ -376,20 +381,20 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('meld-diff.diffSavedVersion', async () => {
+	context.subscriptions.push(vscode.commands.registerCommand('jetbrains-diff.diffSavedVersion', async () => {
 		const editor = window.activeTextEditor;
 		if (!editor) {
-			window.showErrorMessage("Meld Diff Error: Current window is not an editor!");
+			window.showErrorMessage("JetBrains Diff Error: Current window is not an editor!");
 			return;
 		}
 
 		if (editor.document.isUntitled) {
-			window.showErrorMessage("Meld Diff Error: No saved version found to compare with!");
+			window.showErrorMessage("JetBrains Diff Error: No saved version found to compare with!");
 			return;
 		}
 
 		if (!editor.document.isDirty) {
-			window.showInformationMessage("Meld Diff: No difference to saved version of the file.");
+			window.showInformationMessage("JetBrains Diff: No difference to saved version of the file.");
 			return;
 		}
 
@@ -397,15 +402,15 @@ export function activate(context: vscode.ExtensionContext) {
 
 		const editorContent = editor.document.getText();
 		const currentSaved = editor.document.fileName;
-		const current = await writeTempFileOnDisk(editorContent, basename(currentSaved)+"_changed_");
+		const current = await writeTempFileOnDisk(editorContent, basename(currentSaved) + "_changed_");
 		addFileToRemove(current);
 		const sameContent = await areFilesEqual([current, currentSaved]);
 
 		if (sameContent) {
-			window.showInformationMessage('Meld Diff: No difference to saved version of the file.');
+			window.showInformationMessage('JetBrains Diff: No difference to saved version of the file.');
 			cleanupTmpFiles(filesToRemove);
 		} else {
-			const process = showMeld([current, currentSaved]);
+			const process = showJetBrainsResolver([current, currentSaved]);
 			if (process && filesToRemove.length > 0) {
 				const files = [...filesToRemove];
 				process.on('exit', () => cleanupTmpFiles(files));
@@ -415,41 +420,41 @@ export function activate(context: vscode.ExtensionContext) {
 
 	let selected = "";
 
-	context.subscriptions.push(vscode.commands.registerCommand('meld-diff.diffFromFileListMultiple', (_, selectedFiles) => {
+	context.subscriptions.push(vscode.commands.registerCommand('jetbrains-diff.diffFromFileListMultiple', (_, selectedFiles) => {
 		if (selectedFiles) {
 			let files = [];
 			console.log(typeof selectedFiles[0]);
-			for (let i=0; i < selectedFiles.length; i++) {
+			for (let i = 0; i < selectedFiles.length; i++) {
 				files.push(selectedFiles[i].fsPath);
 			}
 
 			outputChannel.appendLine("Compare multiple files: " + files);
-			showMeld(files);
+			showJetBrainsResolver(files);
 		} else {
-			window.showInformationMessage('Meld Diff: Command can only be used from file list.');
+			window.showInformationMessage('JetBrains Diff: Command can only be used from file list.');
 		}
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('meld-diff.diffFromFileListSelect', (_) => {
+	context.subscriptions.push(vscode.commands.registerCommand('jetbrains-diff.diffFromFileListSelect', (_) => {
 		if (!_) {
 			if (window.activeTextEditor) {
 				if (window.activeTextEditor.document.isUntitled) {
-					window.showErrorMessage("Meld Diff Error: Unsaved editors can not be selected for meld diff comparison!");
+					window.showErrorMessage("JetBrains Diff Error: Unsaved editors can not be selected for jetbrains diff comparison!");
 					return;
 				}
 				selected = window.activeTextEditor.document.fileName;
 			} else {
-				window.showErrorMessage("Meld Diff Error: Current window is not an editor!");
+				window.showErrorMessage("JetBrains Diff Error: Current window is not an editor!");
 				return;
 			}
 		} else {
 			selected = _.fsPath;
 		}
-		vscode.commands.executeCommand('setContext', 'meld-diff.FileSelectedForMeldDiff', true);
-		outputChannel.appendLine("Select for meld compare: " + selected);
+		vscode.commands.executeCommand('setContext', 'jetbrains-diff.FileSelectedForJetBrainsDiff', true);
+		outputChannel.appendLine("Select for jetbrains compare: " + selected);
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('meld-diff.diffFromFileList', async (_) => {
+	context.subscriptions.push(vscode.commands.registerCommand('jetbrains-diff.diffFromFileList', async (_) => {
 		let path = "";
 		filesToRemove = [];
 
@@ -461,26 +466,26 @@ export function activate(context: vscode.ExtensionContext) {
 				}
 				path = fileName.name;
 			} else {
-				window.showErrorMessage("Meld Diff Error: Current window is not an editor!");
+				window.showErrorMessage("JetBrains Diff Error: Current window is not an editor!");
 				return;
 			}
 		} else {
 			path = _.fsPath;
 		}
 		if (selected.length > 0) {
-			const process = showMeld([selected, path]);
+			const process = showJetBrainsResolver([selected, path]);
 			if (process && filesToRemove.length > 0) {
 				const files = [...filesToRemove];
 				process.on('exit', () => cleanupTmpFiles(files));
 			}
 		} else {
-			window.showErrorMessage("Meld Diff Error: First select a file to compare with!");
+			window.showErrorMessage("JetBrains Diff Error: First select a file to compare with!");
 		}
 	}));
 
-	context.subscriptions.push(vscode.commands.registerCommand('meld-diff.diffScm', async (_) => {
-		if (! _) {
-			window.showErrorMessage("Meld Diff Error: First select a changed file in source control window and use context menu.");
+	context.subscriptions.push(vscode.commands.registerCommand('jetbrains-diff.diffScm', async (_) => {
+		if (!_) {
+			window.showErrorMessage("JetBrains Diff Error: First select a changed file in source control window and use context menu.");
 			return;
 		}
 
@@ -495,8 +500,8 @@ export function activate(context: vscode.ExtensionContext) {
 					if (err) {
 						return window.showErrorMessage(err);
 					}
-					// start meld
-					const process = showMeld([staged, selectedFile]);
+					// start jetbrains diff tool
+					const process = showJetBrainsResolver([staged, selectedFile]);
 					if (process && filesToRemove.length > 0) {
 						const files = [...filesToRemove];
 						process.on('exit', () => cleanupTmpFiles(files));
@@ -515,8 +520,8 @@ export function activate(context: vscode.ExtensionContext) {
 						if (err) {
 							return window.showErrorMessage(err);
 						}
-						// start meld
-						const process = showMeld([head, staged]);
+						// start jetbrains diff tool
+						const process = showJetBrainsResolver([head, staged]);
 						if (process && filesToRemove.length > 0) {
 							const files = [...filesToRemove];
 							process.on('exit', () => cleanupTmpFiles(files));
@@ -536,8 +541,31 @@ export function activate(context: vscode.ExtensionContext) {
 						if (err) {
 							return window.showErrorMessage(err);
 						}
-						// start meld
-						const process = showMeld([head, selectedFile, incoming]);
+
+						const mergeConflictFiles: MergeConflictFiles = {
+							[MergeConflictFileType.LOCAL]: head,
+							[MergeConflictFileType.REMOTE]: incoming,
+							[MergeConflictFileType.BASE]: selectedFile,
+							[MergeConflictFileType.MERGED]: selectedFile,
+						};
+
+						if (!vscode.workspace.getConfiguration('jetbrains-diff').resolveAgainstMerged) {
+							// get content of common base revision of the selected file for the merge
+							runGit(selectedFile, ":1:./", "base", (base, err) => {
+								if (err) {
+									return window.showErrorMessage(err);
+								}
+								mergeConflictFiles[MergeConflictFileType.BASE] = base;
+							}).then();
+						}
+
+						const process = showJetBrainsResolver([
+							mergeConflictFiles[MergeConflictFileType.LOCAL],
+							mergeConflictFiles[MergeConflictFileType.REMOTE],
+							mergeConflictFiles[MergeConflictFileType.BASE],
+							mergeConflictFiles[MergeConflictFileType.MERGED],
+						]);
+
 						if (process && filesToRemove.length > 0) {
 							const files = [...filesToRemove];
 							process.on('exit', () => cleanupTmpFiles(files));
@@ -547,23 +575,23 @@ export function activate(context: vscode.ExtensionContext) {
 				break;
 
 			case 7: // untracked file
-				window.showInformationMessage("Meld Diff: No diff possible for untracked files!");
+				window.showInformationMessage("JetBrains Diff: No diff possible for untracked files!");
 				break;
 
 			case 1: // staged new file
-				window.showInformationMessage("Meld Diff: No diff possible for files not yet commited!");
+				window.showInformationMessage("JetBrains Diff: No diff possible for files not yet commited!");
 				break;
 
 			default:
-				window.showErrorMessage("Meld Diff Error: Scm diff type " + _.type + " not supported.");
+				window.showErrorMessage("JetBrains Diff Error: Scm diff type " + _.type + " not supported.");
 				break;
 		}
 	}));
 }
 
 export function deactivate() {
-	// delete all tmp files that are not yet deleted because vscode is closed before meld
-	if (vscode.workspace.getConfiguration('meld-diff').cleanUpTempFilesOnCodeClose) {
+	// delete all tmp files that are not yet deleted because vscode is closed before jetbrains diff tool
+	if (vscode.workspace.getConfiguration('jetbrains-diff').cleanUpTempFilesOnCodeClose) {
 		filesToRemoveGlobal.forEach((file) => unlink(file, (err) => {
 			if (err) {
 				outputChannel.appendLine('Unable to delete tmp file: ' + file);

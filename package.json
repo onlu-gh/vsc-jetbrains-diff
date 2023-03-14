@@ -1,31 +1,32 @@
 {
-	"name": "meld-diff",
+	"name": "jetbrains-diff",
 	"version": "1.3.3",
-	"displayName": "Meld Diff",
-	"description": "Use meld (or other tools like WinMerge, Beyond Compare, ...) to compare files, folders, clipboard or git changes from visual studio code directly.",
-	"publisher": "danielroedl",
-	"author": "danielroedl",
+	"displayName": "JetBrains Diff",
+	"description": "Use jetbrains diff resolver tool to compare files, folders, clipboard or git changes from visual studio code directly.",
+	"publisher": "onlu-gh",
+	"author": "onlu-gh",
 	"icon": "images/icon.png",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/danielroedl/vsc-meld-diff"
+		"url": "https://github.com/onlu-gh/vsc-jetbrains-diff"
 	},
 	"keywords": [
 		"Diff",
 		"Compare",
-		"Meld",
-		"WinMerge",
-		"Beyondcompare",
-		"Beyond-compare",
+		"JetBrains",
+		"IntelliJ",
+		"WebStorm",
+		"Merge",
+		"Conflict",
 		"git",
 		"merge-conflict",
 		"clipboard"
 	],
 	"bugs": {
-		"url": "https://github.com/danielroedl/vsc-meld-diff/issues"
+		"url": "https://github.com/onlu-gh/vsc-jetbrains-diff/issues"
 	},
-	"homepage": "https://github.com/danielroedl/vsc-meld-diff",
+	"homepage": "https://github.com/onlu-gh/vsc-jetbrains-diff",
 	"engines": {
 		"vscode": "^1.42.0"
 	},
@@ -33,133 +34,143 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:meld-diff.diffVisible",
-		"onCommand:meld-diff.diffCurrentToOtherOpen",
-		"onCommand:meld-diff.diffCurrentToOther",
-		"onCommand:meld-diff.diffWithClipboard",
-		"onCommand:meld-diff.diffSavedVersion",
-		"onCommand:meld-diff.diffFromFileListSelect",
-		"onCommand:meld-diff.diffFromFileList",
-		"onCommand:meld-diff.diffScm",
-		"onCommand:meld-diff.diffFromFileListMultiple"
+		"onCommand:jetbrains-diff.diffVisible",
+		"onCommand:jetbrains-diff.diffCurrentToOtherOpen",
+		"onCommand:jetbrains-diff.diffCurrentToOther",
+		"onCommand:jetbrains-diff.diffWithClipboard",
+		"onCommand:jetbrains-diff.diffSavedVersion",
+		"onCommand:jetbrains-diff.diffFromFileListSelect",
+		"onCommand:jetbrains-diff.diffFromFileList",
+		"onCommand:jetbrains-diff.diffScm",
+		"onCommand:jetbrains-diff.diffFromFileListMultiple"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
 		"commands": [
 			{
-				"command": "meld-diff.diffVisible",
-				"title": "Compare all visible documents (two or three) using meld",
-				"category": "Meld Diff"
+				"command": "jetbrains-diff.diffVisible",
+				"title": "Compare all visible documents (two or three) using JetBrains",
+				"category": "JetBrains Diff"
 			},
 			{
-				"command": "meld-diff.diffCurrentToOtherOpen",
-				"title": "Compare current file with one other open file in editor using meld",
-				"category": "Meld Diff"
+				"command": "jetbrains-diff.diffCurrentToOtherOpen",
+				"title": "Compare current file with one other open file in editor using JetBrains",
+				"category": "JetBrains Diff"
 			},
 			{
-				"command": "meld-diff.diffCurrentToOther",
-				"title": "Compare current file with one other file (not open in editor) using meld",
-				"category": "Meld Diff"
+				"command": "jetbrains-diff.diffCurrentToOther",
+				"title": "Compare current file with one other file (not open in editor) using JetBrains",
+				"category": "JetBrains Diff"
 			},
 			{
-				"command": "meld-diff.diffWithClipboard",
-				"title": "Compare with clipboard using meld",
-				"category": "Meld Diff"
+				"command": "jetbrains-diff.diffWithClipboard",
+				"title": "Compare with clipboard using JetBrains",
+				"category": "JetBrains Diff"
 			},
 			{
-				"command": "meld-diff.diffSavedVersion",
-				"title": "Compare current file with saved version using meld",
-				"category": "Meld Diff"
+				"command": "jetbrains-diff.diffSavedVersion",
+				"title": "Compare current file with saved version using JetBrains",
+				"category": "JetBrains Diff"
 			},
 			{
-				"command": "meld-diff.diffFromFileListSelect",
-				"title": "Select for meld compare",
-				"category": "Meld Diff"
+				"command": "jetbrains-diff.diffFromFileListSelect",
+				"title": "Select for JetBrains compare",
+				"category": "JetBrains Diff"
 			},
 			{
-				"command": "meld-diff.diffFromFileList",
-				"title": "Compare with selected for meld compare",
-				"category": "Meld Diff"
+				"command": "jetbrains-diff.diffFromFileList",
+				"title": "Compare with selected for JetBrains compare",
+				"category": "JetBrains Diff"
 			},
 			{
-				"command": "meld-diff.diffFromFileListMultiple",
-				"title": "Compare all selected files/folders using meld",
-				"category": "Meld Diff"
+				"command": "jetbrains-diff.diffFromFileListMultiple",
+				"title": "Compare all selected files/folders using JetBrains",
+				"category": "JetBrains Diff"
 			},
 			{
-				"command": "meld-diff.diffScm",
-				"title": "Open with meld diff (git scm)",
-				"category": "Meld Diff"
+				"command": "jetbrains-diff.diffScm",
+				"title": "Open with JetBrains merge conflic resolver",
+				"category": "JetBrains Diff"
 			}
 		],
 		"menus": {
 			"explorer/context": [
 				{
-					"command": "meld-diff.diffFromFileListSelect",
-					"group": "Meld Diff@1",
+					"command": "jetbrains-diff.diffFromFileListSelect",
+					"group": "JetBrains Diff@1",
 					"when": "! listMultiSelection && filesExplorerFocus"
 				},
 				{
-					"command": "meld-diff.diffFromFileList",
-					"group": "Meld Diff@2",
-					"when": "meld-diff.FileSelectedForMeldDiff && ! listMultiSelection && filesExplorerFocus"
+					"command": "jetbrains-diff.diffFromFileList",
+					"group": "JetBrains Diff@2",
+					"when": "jetbrains-diff.FileSelectedForJetBrainsDiff && ! listMultiSelection && filesExplorerFocus"
 				},
 				{
-					"command": "meld-diff.diffFromFileListMultiple",
-					"group": "Meld Diff@3",
+					"command": "jetbrains-diff.diffFromFileListMultiple",
+					"group": "JetBrains Diff@3",
 					"when": "listMultiSelection && filesExplorerFocus"
 				}
 			],
 			"editor/title/context": [
 				{
-					"command": "meld-diff.diffFromFileListSelect",
-					"group": "Meld Diff@1"
+					"command": "jetbrains-diff.diffFromFileListSelect",
+					"group": "JetBrains Diff@1"
 				},
 				{
-					"command": "meld-diff.diffFromFileList",
-					"group": "Meld Diff@2"
+					"command": "jetbrains-diff.diffFromFileList",
+					"group": "JetBrains Diff@2"
 				},
 				{
-					"command": "meld-diff.diffSavedVersion",
-					"group": "Meld Diff@3"
+					"command": "jetbrains-diff.diffSavedVersion",
+					"group": "JetBrains Diff@3"
 				}
 			],
 			"editor/context": [
 				{
-					"command": "meld-diff.diffWithClipboard",
-					"group": "Meld Diff@1",
+					"command": "jetbrains-diff.diffWithClipboard",
+					"group": "JetBrains Diff@1",
 					"when": "editorTextFocus"
 				}
 			],
 			"scm/resourceState/context": [
 				{
-					"command": "meld-diff.diffScm",
+					"command": "jetbrains-diff.diffScm",
 					"when": "scmProvider == git"
 				}
 			]
 		},
 		"configuration": {
-			"title": "Meld Diff",
+			"title": "JetBrains Diff",
 			"properties": {
-				"meld-diff.diffCommand": {
+				"jetbrains-diff.diffCheckerTool": {
 					"type": "string",
-					"default": "meld",
-					"description": "The command to use for compare. Could be a absolute path."
+					"default": "idea.bat",
+					"enum": [
+						"idea.bat",
+						"webstorm.bat",
+						"pycharm.bat"
+					],
+					"enumItemLabels": [
+						"IntelliJ IDEA",
+						"WebStorm",
+						"PyCharm"
+					],
+					"description": "The resolver tool - pick a JetBrains product you have installed.\nThis depends on a defitions of an environment variable (hint: the default directory route for JetBrains products on windows is `C:\\Program Files\\JetBrains\\<Product Name>\\bin`)."
 				},
-				"meld-diff.diffArgumentsTwoWay": {
+				"jetbrains-diff.customDiffCheckerTool": {
 					"type": "string",
-					"default": "\"$1\" \"$2\"",
-					"description": "The arguments given to the Diff Command for two way diff.\n($1 is the first and $2 is the second file)"
+					"default": "",
+					"description": "In case you'd like to use an unlisted diff tool, or use an absolute path instead of adding an environment variable."
 				},
-				"meld-diff.diffArgumentsThreeWay": {
-					"type": "string",
-					"default": "\"$1\" \"$2\" \"$3\"",
-					"description": "The arguments given to the Diff Command for three way diff.\n($1 is the first, $2 is the second file and $3 is the third file)"
+				"jetbrains-diff.resolveAgainstMerged": {
+					"type": "boolean",
+					"default": false,
+					"description": "Use the $MERGED file for the middle section during merge conflict resolution, instead of $BASE (this will make the `<<<<<<< HEAD` notation visible, and show both changes)."
 				},
-				"meld-diff.cleanUpTempFilesOnCodeClose": {
+				"jetbrains-diff.cleanUpTempFilesOnCodeClose": {
 					"type": "boolean",
 					"default": true,
-					"description": "Temporary files (created for clipboard or unsaved comparison) are deleted if visual studio code is closed before meld"
+					"description": "Temporary files (created for clipboard or unsaved comparison) are deleted if visual studio code is closed before JetBrains tool"
 				}
 			}
 		}
