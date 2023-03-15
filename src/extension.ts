@@ -35,7 +35,7 @@ function showJetBrainsResolver(files: string[]) {
 		diffTool = vscode.workspace.getConfiguration('jetbrains-diff').diffCheckerTool;
 	}
 
-	const diffFiles = files.filter(v => existsSync(v.toString())).slice(0, 3);
+	const diffFiles = files.filter(v => existsSync(v.toString())).slice(0, 4);
 
 	if (diffFiles.length < 2) {
 		window.showErrorMessage("JetBrains Diff Error: Minimum two files are needed to diff!");
@@ -67,7 +67,7 @@ function showJetBrainsResolver(files: string[]) {
 			if (error) {
 				if (error.message.match(new RegExp(`${diffTool}: not found`))) {
 					window.showErrorMessage("JetBrains Diff Error: Diff tool cannot be found!");
-				} else {
+				} else if (error.code !== 1) {
 					window.showErrorMessage("JetBrains Diff Error: Error running diff command! StdErr: " + stderr);
 				}
 			}
@@ -232,24 +232,10 @@ async function stageFile(file: string, callback: Callback) {
 	});
 }
 
-function backUpFile(source: string, callback: Callback) {
-	const backup = generateRandomFileNameWithPrefix('backup');
-	copyFile(source, backup, (err: any) => {
-		if (err) {
-			return window.showErrorMessage(`Failed to back up '${source}'.\nError:\n${err}`);
-		}
-		addFileToRemove(backup);
-
-		callback(backup, err);
-	});
-}
-
-function restoreFileFromBackup(backup: string, dest: string) {
-	copyFile(backup, dest, (err) => {
-		if (err) {
-			return window.showErrorMessage(`Failed to restore original file contents, try undoing or rolling back to a previous commit.\nError:\n${err}`);
-		}
-	});
+function clearTmpFilesIfExist() {
+	if (filesToRemove.length > 0) {
+		cleanupTmpFiles([...filesToRemove]);
+	}
 }
 
 export function activate(context: vscode.ExtensionContext) {
@@ -559,64 +545,55 @@ export function activate(context: vscode.ExtensionContext) {
 				break;
 
 			case 16: { // merge conflicts
-				// back up orignal contents of selected file
-				backUpFile(selectedFile, (backup) => {
+				const handleError = (err: string, clearTmpFiles = true) => {
+					clearTmpFiles && clearTmpFilesIfExist();
 
-					const restoreSelectedFileFromBackup = () => restoreFileFromBackup(backup, selectedFile);
-					// get content of common base revision of the selected file for the merge
-					generateTempFileFromGitShow(selectedFile, ":1:./", "base", (base, err) => {
+					return window.showErrorMessage(err);
+				};
+
+				// get content of head version of the selected file
+				generateTempFileFromGitShow(selectedFile, ":2:./", "current", (local, err) => {
+					if (err) {
+						return handleError(`Failed to generate temp file for LOCAL HEAD.\nError:\n${err}`);
+					}
+					// get content of incoming version of the selected file
+					generateTempFileFromGitShow(selectedFile, ":3:./", "incoming", (incoming, err) => {
 						if (err) {
-							return window.showErrorMessage(err);
+							return handleError(`Failed to generate temp file for REMOTE HEAD.\nError:\n${err}`);
 						}
-						// get content of head version of the selected file
-						generateTempFileFromGitShow(selectedFile, ":2:./", "current", (local, err) => {
+						// get content of common base revision of the current head and incoming head
+						generateTempFileFromGitShow(selectedFile, ":1:./", "base", (base, err) => {
 							if (err) {
-								return window.showErrorMessage(err);
+								return handleError(`Failed to generate temp file for common BASE revision of LOCAL and REMOTE HEADs.\nError:\n${err}`);
 							}
-							// get content of incoming version of the selected file
-							generateTempFileFromGitShow(selectedFile, ":3:./", "incoming", (incoming, err) => {
-								if (err) {
-									return window.showErrorMessage(err);
-								}
-								copyFile(base, selectedFile, (err) => {
-									if (err) {
-										restoreSelectedFileFromBackup();
 
-										return window.showErrorMessage(err.message);
-									}
+							//Initiate the JetBrains resolver tool with based on the expected format - <tool> merge **LOCAL REMOTE [BASE] MERGED(output)**
+							const process = showJetBrainsResolver([local, incoming, base, selectedFile]);
 
-									//TODO add meaningful comment
-									const process = showJetBrainsResolver([local, incoming, selectedFile]);
+							if (process) {
+								process.once('exit', (code) => {
+									clearTmpFilesIfExist();
 
-									if (process) {
-										process.once('error', () => {
-											// restore orignal contents of selected file in case of error during the merge process
-											restoreSelectedFileFromBackup();
-										});
-										process.once('exit', (code) => {
-											if (code === 0) {
-												stageFile(selectedFile, (_, err) => {
-													if (err) {
-														return window.showErrorMessage(`Application of merge conflict resolution was successful, try to stage file manually through the interface.`);
-													}
-													return window.showInformationMessage(`File merged successfully!`);
-												});
-											}
-											else {
-												// restore orignal contents of selected file in case of unsuccessful exit code
-												restoreSelectedFileFromBackup();
+									switch (code) {
+										case 0:
+											stageFile(selectedFile, (_, err) => {
+												if (err) {
+													return handleError(
+														`Application of merge conflict resolution was successful, try to stage file manually through the interface.`,
+														false,
+													);
+												}
 
-												return window.showErrorMessage(`JetBrains diff tool process finished with unsuccessful error code`);
-											}
-											process.removeAllListeners();
-											if (filesToRemove.length > 0) {
-												const files = [...filesToRemove];
-												cleanupTmpFiles(files);
-											}
-										});
+												return window.showInformationMessage(`Resolved merge conflicts in ${selectedFile}`);
+											});
+											return;
+										case 1:
+											return window.showWarningMessage(`Cancelled merge and discarded changes.`);
+										default:
+											return handleError(`JetBrains diff tool process exited with unsuccessful code - ${code}`, false);
 									}
 								});
-							});
+							}
 						});
 					});
 				});

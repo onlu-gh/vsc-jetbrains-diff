@@ -89,7 +89,7 @@
 			},
 			{
 				"command": "jetbrains-diff.diffScm",
-				"title": "Open with JetBrains merge conflic resolver",
+				"title": "Resolve conflicts with JetBrains tool",
 				"category": "JetBrains Diff"
 			}
 		],
