@@ -1,4 +1,7 @@
-# Compare files, folders, clipboard or git changes with the JetBrains resolver tool directly from vs code
+> **THIS IS A FORK OF https://github.com/danielroedl/vsc-meld-diff AND MOST OF THE CODE COMES FROM THERE.**
+> **THE CODE WAS ALTERED TO WORK MAINLY WITH THE JETBRAINS DIFF TOOL.**
+
+# Compare files, folders, clipboard or git changes with the JetBrains diff tool directly from vs code
 
 This extension open two files (or folders), or a file with merge conflicts in the external tool by JetBrains. It is also possible to compare editor context or text selection with the clipboard or to use it with the git source control.
 
@@ -52,16 +55,16 @@ Up to three visible files can be compared with this command. To use it two or th
 If there are more than three files visible the three files with the newest modification timestamp are used.
 
 ## Compare current file with one other open file in editor using JetBrains
-The current selected file will be the first file for the comparison (left side in JetBrains).
+The current selected file will be the first file for the comparison (left side in JetBrains diff tool).
 
-The second file for the comparison (right side in JetBrains) is selected by menu which shows all open files.
+The second file for the comparison (right side in JetBrains diff tool) is selected by menu which shows all open files.
 
 ![Compare file to other open file](images/compare_to_open_file.png)
 
 ## Compare current file with one other file (not open in editor) using JetBrains
-The current selected file will be the first file for the comparison (left side in JetBrains).
+The current selected file will be the first file for the comparison (left side in JetBrains diff tool).
 
-The second file file for the comparison (right side in JetBrains) is selected by open file dialog.
+The second file file for the comparison (right side in JetBrains diff tool) is selected by open file dialog.
 
 ## Compare current file with saved version using JetBrains
 Compare the changed version in the current editor with it's saved version.
@@ -71,14 +74,14 @@ Change the contend in an editor and call the function. The changed content will 
 This command is also available in the [editor title context menu](#usage-with-editor-title-context-menu).
 
 ## Select for JetBrains compare
-Set the current selected file as the first file for the comparison (left side in JetBrains).
+Set the current selected file as the first file for the comparison (left side in JetBrains diff tool).
 
 This command is also available in the [file list](#usage-with-file-list-also-folder-comparison-possible) (only if one element is selected) and the [editor title context menu](#usage-with-editor-title-context-menu).
 
 ![Compare file to compare to from file list](images/select_for_compare.png)
 
 ## Compare with selected for JetBrains compare
-Compare the current file (right side in JetBrains) with the file selected before by '*Select for JetBrains compare*'.
+Compare the current file (right side in JetBrains diff tool) with the file selected before by '*Select for JetBrains compare*'.
 
 This command is also available in the [file list](#usage-with-file-list-also-folder-comparison-possible) (only if one element is selected and an element for JetBrains compare is selected before) and the [editor title context menu](#usage-with-editor-title-context-menu).
 
@@ -103,7 +106,7 @@ It is possible to open a diff or merge conflict of a file from the Source Contro
 
 Therefore the command '*Open with JetBrains diff tool' can be selected from the context menu.
 
-![Open changed file from scm](images/open_with_jetbrains_diff_git.png)
+![Open changed file from scm](images/open_with_jetbrains_diff_tool_git.png)
 
 All versions of the file that are not in the current workspace that are needed for the diff (e.g for diff of HEAD version to staged version) are only temporary and are deleted after JetBrains tool is closed.
 
@@ -116,14 +119,14 @@ This option is only available in the file list and only if more than one file is
 
 # Usage with file list (also folder comparison possible)
 ## Select for JetBrains compare
-Select the first file or folder to compare (left side in JetBrains) by right click on file list and hit '*Select for JetBrains compare*'.
+Select the first file or folder to compare (left side in JetBrains diff tool) by right click on file list and hit '*Select for JetBrains compare*'.
 
 ![Compare file to compare to from file list](images/select_for_compare.png)
 
 **Command in context menu only shown if one element is selected!**
 
 ## Compare with selected for JetBrains compare
-Select the file or folder to compare to the file or folder selected before (right side in JetBrains) by right click on file list and hit '*Compare with selected for JetBrains compare*'.
+Select the file or folder to compare to the file or folder selected before (right side in JetBrains diff tool) by right click on file list and hit '*Compare with selected for JetBrains compare*'.
 
 ![Compare to selected from file list](images/compare_to_selected.png)
 

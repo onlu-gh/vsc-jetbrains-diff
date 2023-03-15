@@ -49,47 +49,47 @@
 		"commands": [
 			{
 				"command": "jetbrains-diff.diffVisible",
-				"title": "Compare all visible documents (two or three) using JetBrains",
+				"title": "Compare all visible documents (two or three) using JetBrains diff tool",
 				"category": "JetBrains Diff"
 			},
 			{
 				"command": "jetbrains-diff.diffCurrentToOtherOpen",
-				"title": "Compare current file with one other open file in editor using JetBrains",
+				"title": "Compare current file with one other open file in editor using JetBrains diff tool",
 				"category": "JetBrains Diff"
 			},
 			{
 				"command": "jetbrains-diff.diffCurrentToOther",
-				"title": "Compare current file with one other file (not open in editor) using JetBrains",
+				"title": "Compare current file with one other file (not open in editor) using JetBrains diff tool",
 				"category": "JetBrains Diff"
 			},
 			{
 				"command": "jetbrains-diff.diffWithClipboard",
-				"title": "Compare with clipboard using JetBrains",
+				"title": "Compare with clipboard using JetBrains diff tool",
 				"category": "JetBrains Diff"
 			},
 			{
 				"command": "jetbrains-diff.diffSavedVersion",
-				"title": "Compare current file with saved version using JetBrains",
+				"title": "Compare current file with saved version using JetBrains diff tool",
 				"category": "JetBrains Diff"
 			},
 			{
 				"command": "jetbrains-diff.diffFromFileListSelect",
-				"title": "Select for JetBrains compare",
+				"title": "Select for JetBrains Diff compare",
 				"category": "JetBrains Diff"
 			},
 			{
 				"command": "jetbrains-diff.diffFromFileList",
-				"title": "Compare with selected for JetBrains compare",
+				"title": "Compare with selected for JetBrains Diff compare",
 				"category": "JetBrains Diff"
 			},
 			{
 				"command": "jetbrains-diff.diffFromFileListMultiple",
-				"title": "Compare all selected files/folders using JetBrains",
+				"title": "Compare all selected files/folders using JetBrains diff tool",
 				"category": "JetBrains Diff"
 			},
 			{
 				"command": "jetbrains-diff.diffScm",
-				"title": "Resolve conflicts with JetBrains tool",
+				"title": "Resolve diff/ merge conflicts with JetBrains diff tool",
 				"category": "JetBrains Diff"
 			}
 		],
@@ -155,7 +155,7 @@
 						"WebStorm",
 						"PyCharm"
 					],
-					"description": "The resolver tool - pick a JetBrains product you have installed.\nThis depends on a defitions of an environment variable.\n\nHint:\nThe default directory route for JetBrains products on windows is -\n`C:\\Program Files\\JetBrains\\<Product Name>\\bin`."
+					"description": "The diff tool - pick a JetBrains product you have installed.\nThis depends on a defitions of an environment variable.\n\nHint:\nThe default directory route for JetBrains products on windows is -\n`C:\\Program Files\\JetBrains\\<Product Name>\\bin`."
 				},
 				"jetbrains-diff.customDiffCheckerTool": {
 					"type": "string",
@@ -165,7 +165,7 @@
 				"jetbrains-diff.cleanUpTempFilesOnCodeClose": {
 					"type": "boolean",
 					"default": true,
-					"description": "Temporary files (created for clipboard or unsaved comparison) are deleted if visual studio code is closed before JetBrains tool."
+					"description": "Temporary files (created for clipboard or unsaved comparison) are deleted if visual studio code is closed before the JetBrains diff tool."
 				}
 			}
 		}
