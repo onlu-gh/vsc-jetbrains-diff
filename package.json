@@ -1,6 +1,6 @@
 {
 	"name": "jetbrains-diff",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"displayName": "JetBrains Diff",
 	"description": "Use jetbrains diff resolver tool to compare files, folders, clipboard or git changes from visual studio code directly.",
 	"publisher": "onlu-gh",

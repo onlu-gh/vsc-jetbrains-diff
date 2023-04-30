@@ -9,7 +9,7 @@ There are several commands to do different ways of comparing. It is also possibl
 
 Hit `Ctrl` + `Shift` + `P` to open the command menu and type `JetBrains Diff`.
 
-![All commands](images/all_cmds.png)
+![All commands](images/all_cmds1.png)
 
 *Folder comparison is only possible from file list (see hint in command description `Select for JetBrains compare` and `Compare with selected for JetBrains compare`)*
 
@@ -50,7 +50,7 @@ This chapter describes every command in detail.
 ## Compare all visible documents (two or three) using JetBrains
 Up to three visible files can be compared with this command. To use it two or three files have to be visible side by side.
 
-![Compare side by side files](images/files_side_by_side.png)
+![Compare side by side files](images/files_side_by_side1.png)
 
 If there are more than three files visible the three files with the newest modification timestamp are used.
 
@@ -59,7 +59,7 @@ The current selected file will be the first file for the comparison (left side i
 
 The second file for the comparison (right side in JetBrains diff tool) is selected by menu which shows all open files.
 
-![Compare file to other open file](images/compare_to_open_file.png)
+![Compare file to other open file](images/compare_to_open_file1.png)
 
 ## Compare current file with one other file (not open in editor) using JetBrains
 The current selected file will be the first file for the comparison (left side in JetBrains diff tool).
@@ -78,14 +78,14 @@ Set the current selected file as the first file for the comparison (left side in
 
 This command is also available in the [file list](#usage-with-file-list-also-folder-comparison-possible) (only if one element is selected) and the [editor title context menu](#usage-with-editor-title-context-menu).
 
-![Compare file to compare to from file list](images/select_for_compare.png)
+![Compare file to compare to from file list](images/select_for_compare1.png)
 
 ## Compare with selected for JetBrains compare
 Compare the current file (right side in JetBrains diff tool) with the file selected before by '*Select for JetBrains compare*'.
 
 This command is also available in the [file list](#usage-with-file-list-also-folder-comparison-possible) (only if one element is selected and an element for JetBrains compare is selected before) and the [editor title context menu](#usage-with-editor-title-context-menu).
 
-![Compare to selected from file list](images/compare_to_selected.png)
+![Compare to selected from file list](images/compare_to_selected1.png)
 
 ## Compare with clipboard using JetBrains
 Compare the current file or the current selected text with the content of the clipboard.
@@ -106,7 +106,7 @@ It is possible to open a diff or merge conflict of a file from the Source Contro
 
 Therefore the command '*Open with JetBrains diff tool' can be selected from the context menu.
 
-![Open changed file from scm](images/open_with_jetbrains_diff_tool_git.png)
+![Open changed file from scm](images/open_with_jetbrains_diff_tool_git1.png)
 
 All versions of the file that are not in the current workspace that are needed for the diff (e.g for diff of HEAD version to staged version) are only temporary and are deleted after JetBrains tool is closed.
 
@@ -121,14 +121,14 @@ This option is only available in the file list and only if more than one file is
 ## Select for JetBrains compare
 Select the first file or folder to compare (left side in JetBrains diff tool) by right click on file list and hit '*Select for JetBrains compare*'.
 
-![Compare file to compare to from file list](images/select_for_compare.png)
+![Compare file to compare to from file list](images/select_for_compare1.png)
 
 **Command in context menu only shown if one element is selected!**
 
 ## Compare with selected for JetBrains compare
 Select the file or folder to compare to the file or folder selected before (right side in JetBrains diff tool) by right click on file list and hit '*Compare with selected for JetBrains compare*'.
 
-![Compare to selected from file list](images/compare_to_selected.png)
+![Compare to selected from file list](images/compare_to_selected1.png)
 
 **Command in context menu only if one element is selected and an element for JetBrains compare was selected before!**
 
@@ -138,12 +138,12 @@ See [Compare all selected files/folders using JetBrains](#compare-all-selected-f
 # Usage with editor context menu
 The command '*Compare with clipboard*' is also available in the context menu of a text editor.
 
-![Editor context menu](images/editor_context_menu.png)
+![Editor context menu](images/editor_context_menu1.png)
 
 # Usage with editor title context menu
 The commands '*Select for JetBrains compare*', '*Compare with selected for JetBrains compare*' and '*Compare current file with saved version*' are also available in the context menu of a text editor title.
 
-![Editor context menu](images/editor_title_context_menu.png)
+![Editor context menu](images/editor_title_context_menu1.png)
 
 # Customize settings
 ## Pick installed JetBrains product from list
